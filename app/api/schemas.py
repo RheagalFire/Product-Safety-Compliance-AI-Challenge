@@ -36,6 +36,7 @@ class EvaluateRequest(BaseModel):
 
     file_path: str | None = None
     forbidden_ingredients: list[str] | None = None  # optional override; falls back to default
+    ocr_strategy: Literal["easyocr", "gemini_vision"] = "gemini_vision"
 
 
 class EvaluateResponse(BaseModel):

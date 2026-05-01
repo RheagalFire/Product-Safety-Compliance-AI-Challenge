@@ -111,6 +111,42 @@
     .dz-prompt em { font-family: "Fraunces", serif; font-style: italic; font-weight: 400; color: var(--ink); }
     .dz-filename { color: var(--ink); font-size: 13px; word-break: break-all; }
     .dz-filename .size { color: var(--muted); margin-left: 8px; }
+    .dz-preview {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .dz-preview img {
+      max-height: 240px; max-width: 100%;
+      object-fit: contain;
+      border: 1px solid var(--rule);
+      background: var(--paper-deep);
+      animation: rise 350ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+    .dz-preview .doc-tile {
+      width: 88px; height: 110px;
+      border: 1px solid var(--rule-strong);
+      background: var(--paper-deep);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: "Fraunces", serif; font-style: italic; font-size: 13px; color: var(--muted);
+      letter-spacing: 0.04em;
+      position: relative;
+      animation: rise 350ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+    .dz-preview .doc-tile::before {
+      content: ""; position: absolute; top: 0; right: 0;
+      width: 16px; height: 16px;
+      background: var(--paper);
+      border-left: 1px solid var(--rule-strong);
+      border-bottom: 1px solid var(--rule-strong);
+    }
+    .dz-preview .doc-tile .ext {
+      font-family: "JetBrains Mono", monospace;
+      font-style: normal;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink);
+      margin-top: 4px;
+    }
     .hint { color: var(--muted); font-size: 11px; margin-top: 8px; }
     /* ───────── override (collapsible) ───────── */
     details.override { border-bottom: 1px solid var(--rule); }
@@ -161,6 +197,32 @@
     .run:disabled { background: var(--rule-strong); cursor: not-allowed; }
     .run .arrow { display: inline-block; margin-left: 12px; transition: transform 200ms ease; }
     .run:hover:not(:disabled) .arrow { transform: translateX(4px); }
+    /* ───────── strategy radio ───────── */
+    .strategy {
+      display: flex; gap: 0; margin-top: 18px;
+      border: 1px solid var(--rule);
+    }
+    .strategy label {
+      flex: 1;
+      padding: 12px 14px;
+      font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      text-align: center;
+      transition: background 150ms ease, color 150ms ease;
+      border-right: 1px solid var(--rule);
+    }
+    .strategy label:last-child { border-right: 0; }
+    .strategy label:hover { color: var(--ink); }
+    .strategy input { display: none; }
+    .strategy input:checked + span { color: var(--ink); font-weight: 600; }
+    .strategy label:has(input:checked) { background: var(--ink); }
+    .strategy label:has(input:checked) span { color: var(--paper); }
+    .strategy label .sub {
+      display: block; font-size: 9px; letter-spacing: 0.1em; color: var(--rule-strong);
+      margin-top: 4px; text-transform: lowercase; font-style: italic; font-family: "Fraunces", serif;
+    }
+    .strategy label:has(input:checked) .sub { color: var(--paper); opacity: 0.6; }
     /* ───────── loading scan ───────── */
     .loading {
       margin-top: 24px;
@@ -182,12 +244,41 @@
       0%   { transform: translateX(-100%); }
       100% { transform: translateX(360%); }
     }
-    .loading-label {
-      margin-top: 14px;
-      font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted);
-      text-align: center;
+    /* ───────── event stream ───────── */
+    .events {
+      margin-top: 18px;
+      border-left: 1px solid var(--ink);
+      padding: 6px 0 6px 16px;
+      font-size: 12px;
+      color: var(--muted);
     }
-    .loading-label .blink { animation: blink 1.2s steps(2) infinite; }
+    .events .ev {
+      display: flex; align-items: baseline; gap: 12px;
+      padding: 4px 0;
+      animation: ev-in 350ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+    .events .ev:last-child .verb {
+      color: var(--ink); font-weight: 500;
+    }
+    .events .ev:last-child::after {
+      content: "_"; margin-left: 2px; animation: blink 1s steps(2) infinite; color: var(--ink);
+    }
+    .events .ts {
+      font-feature-settings: "tnum";
+      font-size: 10px; color: var(--rule-strong); min-width: 52px;
+    }
+    .events .verb { flex: 1; }
+    .events .layer-tag {
+      font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+      padding: 2px 6px; border: 1px solid var(--rule); color: var(--muted);
+    }
+    .events .layer-tag.A { border-color: var(--ink); color: var(--ink); }
+    .events .layer-tag.B { border-color: var(--ink); color: var(--ink); border-style: dashed; }
+    .events .layer-tag.C { border-color: var(--reject); color: var(--reject); }
+    @keyframes ev-in {
+      from { opacity: 0; transform: translateX(-6px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
     @keyframes blink { 50% { opacity: 0; } }
     @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
     /* ───────── verdict ───────── */
@@ -391,7 +482,10 @@
       <div class="dz" id="dz" tabindex="0" role="button" aria-label="upload product file">
         <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
         <div class="dz-prompt" id="dzPrompt">drop a product label here, or <em>click to select</em></div>
-        <div class="dz-filename" id="dzFilename" hidden></div>
+        <div class="dz-preview" id="dzPreview" hidden>
+          <div id="dzThumb"></div>
+          <div class="dz-filename" id="dzFilename"></div>
+        </div>
         <input type="file" id="fileInput" accept=".txt,.pdf,.png,.jpg,.jpeg" hidden />
       </div>
       <div class="hint">accepts &nbsp;·&nbsp; .txt &nbsp;·&nbsp; .pdf &nbsp;·&nbsp; .png &nbsp;·&nbsp; .jpg</div>
@@ -410,11 +504,26 @@
       </details>
     </section>
 
+    <!-- 003 / OCR strategy -->
+    <section>
+      <div class="sect-head"><span class="num">003</span><span>ocr strategy</span></div>
+      <div class="strategy" role="radiogroup">
+        <label>
+          <input type="radio" name="ocr" value="gemini_vision" checked />
+          <span>gemini vision<span class="sub">— one call, fast, cloud</span></span>
+        </label>
+        <label>
+          <input type="radio" name="ocr" value="easyocr" />
+          <span>easyocr<span class="sub">— local, slower, ~100mb model</span></span>
+        </label>
+      </div>
+    </section>
+
     <button class="run" id="runBtn" disabled>analyze specimen <span class="arrow">→</span></button>
 
     <div id="loading" class="loading" hidden>
       <div class="loading-bar"></div>
-      <div class="loading-label">extracting · resolving · judging<span class="blink">_</span></div>
+      <div class="events" id="events"></div>
     </div>
 
     <div id="result"></div>
@@ -430,6 +539,8 @@
     const dz         = document.getElementById('dz');
     const fileInput  = document.getElementById('fileInput');
     const dzPrompt   = document.getElementById('dzPrompt');
+    const dzPreview  = document.getElementById('dzPreview');
+    const dzThumb    = document.getElementById('dzThumb');
     const dzFilename = document.getElementById('dzFilename');
     const runBtn     = document.getElementById('runBtn');
     const loadingEl  = document.getElementById('loading');
@@ -438,12 +549,33 @@
     const forbiddenEl= document.getElementById('forbidden');
 
     let chosenFile = null;
+    let currentObjectUrl = null;
 
     function setFile(f) {
       chosenFile = f;
       dzPrompt.hidden = true;
-      dzFilename.hidden = false;
+      dzPreview.hidden = false;
       dzFilename.innerHTML = `${escapeHtml(f.name)} <span class="size">${(f.size / 1024).toFixed(1)} kb</span>`;
+
+      // Free any previous object URL
+      if (currentObjectUrl) { URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null; }
+      dzThumb.innerHTML = '';
+
+      const isImage = (f.type && f.type.startsWith('image/')) || /\.(png|jpe?g|gif|webp)$/i.test(f.name);
+      if (isImage) {
+        currentObjectUrl = URL.createObjectURL(f);
+        const img = document.createElement('img');
+        img.src = currentObjectUrl;
+        img.alt = f.name;
+        dzThumb.appendChild(img);
+      } else {
+        // text / pdf — render a folded-corner document tile with the extension
+        const ext = (f.name.split('.').pop() || '').toLowerCase();
+        const tile = document.createElement('div');
+        tile.className = 'doc-tile';
+        tile.innerHTML = `<span class="ext">.${escapeHtml(ext)}</span>`;
+        dzThumb.appendChild(tile);
+      }
       runBtn.disabled = false;
     }
 
@@ -458,28 +590,61 @@
     }));
     dz.addEventListener('drop', e => { if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
 
+    const eventsEl = document.getElementById('events');
+
+    function pushEvent(evt) {
+      const ms = (evt.elapsed_ms ?? 0).toString().padStart(4, '0') + 'ms';
+      const layer = evt.layer ? `<span class="layer-tag ${evt.layer}">${evt.layer}</span>` : '';
+      const div = document.createElement('div');
+      div.className = 'ev';
+      div.innerHTML = `<span class="ts">${ms}</span><span class="verb">${escapeHtml(evt.verb)}</span>${layer}`;
+      eventsEl.appendChild(div);
+      eventsEl.scrollTop = eventsEl.scrollHeight;
+    }
+
     runBtn.addEventListener('click', async () => {
       if (!chosenFile) return;
       errorEl.innerHTML = '';
       resultEl.innerHTML = '';
+      eventsEl.innerHTML = '';
       loadingEl.hidden = false;
       runBtn.disabled = true;
 
       const fd = new FormData();
       fd.append('file', chosenFile);
       const forbidden = forbiddenEl.value.split('\n').map(s => s.trim()).filter(Boolean);
-      if (forbidden.length) {
-        fd.append('payload', JSON.stringify({ forbidden_ingredients: forbidden }));
-      }
+      const ocr = document.querySelector('input[name=ocr]:checked').value;
+      const reqBody = { ocr_strategy: ocr };
+      if (forbidden.length) reqBody.forbidden_ingredients = forbidden;
+      fd.append('payload', JSON.stringify(reqBody));
 
       try {
-        const r = await fetch('/evaluate_product', { method: 'POST', body: fd });
-        if (!r.ok) {
+        const r = await fetch('/evaluate_product/stream', { method: 'POST', body: fd });
+        if (!r.ok || !r.body) {
           const text = await r.text().catch(() => '');
           throw new Error(`${r.status} ${r.statusText}${text ? ' · ' + text.slice(0, 200) : ''}`);
         }
-        const data = await r.json();
-        renderResult(data);
+        const reader = r.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let result = null;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop() || '';
+          for (const block of lines) {
+            const m = block.match(/^data:\s*(.+)$/m);
+            if (!m) continue;
+            const evt = JSON.parse(m[1]);
+            if (evt.type === 'stage')  pushEvent(evt);
+            else if (evt.type === 'result') result = evt.data;
+            else if (evt.type === 'error') throw new Error(evt.message);
+          }
+        }
+        if (result) renderResult(result);
+        else throw new Error('stream ended without a result');
       } catch (err) {
         errorEl.innerHTML = `<div class="error"><b>error</b>${escapeHtml(err.message || String(err))}</div>`;
       } finally {
@@ -500,7 +665,7 @@
 
       const verdictHtml = `
         <section class="verdict">
-          <div class="sect-head"><span class="num">003</span><span>verdict</span></div>
+          <div class="sect-head"><span class="num">004</span><span>verdict</span></div>
           <div class="verdict-status ${isReject ? 'rejected' : ''}"><em>${escapeHtml(d.status)}</em><span class="underscore"></span></div>
           ${(d.product_name || d.product_id) ? `
             <div class="verdict-product">
@@ -514,14 +679,14 @@
 
       const findingsHtml = (d.reason && d.reason.length) ? `
         <section>
-          <div class="sect-head"><span class="num">004</span><span>findings</span><span class="count">${d.reason.length}</span></div>
+          <div class="sect-head"><span class="num">005</span><span>findings</span><span class="count">${d.reason.length}</span></div>
           ${d.reason.map((r, i) => renderFinding(r, i)).join('')}
         </section>
       ` : '';
 
       const cloudHtml = (d.ingredients_detected && d.ingredients_detected.length) ? `
         <section>
-          <div class="sect-head"><span class="num">005</span><span>detected ingredients</span><span class="count">${d.ingredients_detected.length}</span></div>
+          <div class="sect-head"><span class="num">006</span><span>detected ingredients</span><span class="count">${d.ingredients_detected.length}</span></div>
           <div class="cloud">
             ${d.ingredients_detected.map(i => `<span class="pellet${flaggedSet.has(i) ? ' flagged' : ''}">${escapeHtml(i)}</span>`).join('')}
           </div>
@@ -536,7 +701,7 @@
 
       const traceHtml = `
         <section>
-          <div class="sect-head"><span class="num">006</span><span>trace</span></div>
+          <div class="sect-head"><span class="num">007</span><span>trace</span></div>
           <dl class="trace">
             <dt>backend</dt>
             <dd>${escapeHtml(d.trace.extraction_backend)}</dd>

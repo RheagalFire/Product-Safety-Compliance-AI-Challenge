@@ -17,7 +17,8 @@ class KnowledgeResolver:
 
     @observe(name="resolve.pubchem")
     async def resolve_cids(self, surface: str, kind: IngredientKind) -> tuple[list[int], str]:
-        kind = kind if kind is not IngredientKind.UNKNOWN else classify(surface)
+        # Always trust classify() over the LLM's hint — see layer_a for why.
+        kind = classify(surface)
         if kind is IngredientKind.FORMULA:
             normalized = to_hill(surface)
             key = ("formula", normalized)
@@ -61,8 +62,7 @@ async def match_layer_b(
         ]
 
     for ing in residuals:
-        kind = ing.kind if ing.kind is not IngredientKind.UNKNOWN else classify(ing.surface_form)
-        cids, normalized = await resolver.resolve_cids(ing.surface_form, kind)
+        cids, normalized = await resolver.resolve_cids(ing.surface_form, ing.kind)
         intersection = set(cids) & index.cid_set
         resolved = ResolvedIngredient(
             surface_form=ing.surface_form,

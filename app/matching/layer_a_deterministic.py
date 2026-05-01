@@ -15,7 +15,10 @@ def match_layer_a(
     residuals: list[IngredientMention] = []
 
     for ing in ingredients:
-        kind = ing.kind if ing.kind is not IngredientKind.UNKNOWN else classify(ing.surface_form)
+        # The LLM's `kind` hint is unreliable on edge cases (e.g. all-caps
+        # "CAFFEINE" sometimes tagged FORMULA). classify() validates against
+        # the actual periodic table, so trust it over the model.
+        kind = classify(ing.surface_form)
         forbidden_entry: str | None = None
         normalized: str
         rationale: str
