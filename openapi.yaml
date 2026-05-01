@@ -1,0 +1,192 @@
+openapi: 3.1.0
+info:
+  title: Product Safety Compliance
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      summary: Health
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Health Health Get
+  /evaluate_product:
+    post:
+      summary: Evaluate Product
+      description: "Evaluate a product file against the configured forbidden ingredient list.\n\nAccepts:\n\
+        \  - `file`: multipart upload (txt / pdf / png / jpg)\n  - `payload`: optional JSON form field\
+        \ with `EvaluateRequest` shape\n    (`file_path` for server-side files, `forbidden_ingredients`\
+        \ to override\n    the default list for this request only)"
+      operationId: evaluate_product_evaluate_product_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_evaluate_product_evaluate_product_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluateResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    Body_evaluate_product_evaluate_product_post:
+      properties:
+        file:
+          anyOf:
+          - type: string
+            contentMediaType: application/octet-stream
+          - type: 'null'
+          title: File
+        payload:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Payload
+      type: object
+      title: Body_evaluate_product_evaluate_product_post
+    EvaluateResponse:
+      properties:
+        product_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Product Id
+        product_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Product Name
+        status:
+          type: string
+          enum:
+          - Accepted
+          - Rejected
+          title: Status
+        reason:
+          items:
+            $ref: '#/components/schemas/ReasonItem'
+          type: array
+          title: Reason
+        ingredients_detected:
+          items:
+            type: string
+          type: array
+          title: Ingredients Detected
+        trace:
+          $ref: '#/components/schemas/TraceSummary'
+      type: object
+      required:
+      - status
+      - trace
+      title: EvaluateResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    MatchLayer:
+      type: string
+      enum:
+      - A
+      - B
+      - C
+      title: MatchLayer
+    ReasonItem:
+      properties:
+        forbidden_ingredient:
+          type: string
+          title: Forbidden Ingredient
+        matched_in_product:
+          type: string
+          title: Matched In Product
+        method:
+          type: string
+          enum:
+          - exact_match
+          - pubchem_cid
+          - llm_judge
+          title: Method
+        confidence:
+          type: number
+          title: Confidence
+        rationale:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Rationale
+      type: object
+      required:
+      - forbidden_ingredient
+      - matched_in_product
+      - method
+      - confidence
+      title: ReasonItem
+    TraceSummary:
+      properties:
+        extraction_backend:
+          type: string
+          title: Extraction Backend
+        extraction_confidence:
+          type: number
+          title: Extraction Confidence
+        layers_run:
+          items:
+            $ref: '#/components/schemas/MatchLayer'
+          type: array
+          title: Layers Run
+        short_circuited_at:
+          anyOf:
+          - $ref: '#/components/schemas/MatchLayer'
+          - type: 'null'
+      type: object
+      required:
+      - extraction_backend
+      - extraction_confidence
+      - layers_run
+      title: TraceSummary
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
