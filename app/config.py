@@ -12,10 +12,6 @@ class Settings(BaseSettings):
     forbidden_csv: Path = Path("forbidden_ingredients.csv")
 
     primary_text_model: str = "gemini/gemini-3-flash-preview"  # used by Layer C judge
-    # Note: 'gemini-3-flash-preview-lite' was requested but doesn't exist on
-    # Google's side; the closest stable preview is 'gemini-3-flash-preview'.
-    # The 3.1-flash-lite-preview alternative has a repetition pathology on
-    # some inputs (loops on SKU value), so we use the non-lite 3-preview.
     extraction_model: str = "gemini/gemini-3-flash-preview"  # used by LlmSchemaExtractor
     vision_model: str = "gemini/gemini-3-flash-preview"
 

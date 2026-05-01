@@ -35,7 +35,9 @@ class EvaluateRequest(BaseModel):
     """Sent as JSON in the multipart `payload` form field."""
 
     file_path: str | None = None
-    forbidden_ingredients: list[str] | None = None  # optional override; falls back to default
+    # Entries to ADD to the default forbidden list for this request only
+    # (additive — does not replace the default). Empty / None → default only.
+    additional_forbidden_ingredients: list[str] | None = None
     ocr_strategy: Literal["easyocr", "gemini_vision"] = "gemini_vision"
 
 

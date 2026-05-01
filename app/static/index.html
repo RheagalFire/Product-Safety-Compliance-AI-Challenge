@@ -148,22 +148,40 @@
       margin-top: 4px;
     }
     .hint { color: var(--muted); font-size: 11px; margin-top: 8px; }
-    /* ───────── override (collapsible) ───────── */
-    details.override { border-bottom: 1px solid var(--rule); }
-    details.override > summary {
+    /* ───────── blocked-list panel ───────── */
+    .blocklist-cloud { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .blocklist-cloud .pellet {
+      font-size: 11px;
+      padding: 4px 10px;
+      border: 1px solid var(--reject);
+      color: var(--reject);
+      background: transparent;
+      white-space: nowrap;
+      animation: rise 250ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+    .blocklist-cloud .pellet.added {
+      border-style: dashed;
+      animation-delay: 50ms;
+    }
+    .blocklist-loading {
+      font-size: 11px; color: var(--rule-strong); font-style: italic;
+      font-family: "Fraunces", serif;
+    }
+    /* additive textarea (collapsible) */
+    details.additive { margin-top: 4px; }
+    details.additive > summary {
       list-style: none;
       cursor: pointer;
-      padding: 14px 0;
-      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 8px 0;
+      display: flex; align-items: baseline;
       font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
     }
-    details.override > summary::-webkit-details-marker { display: none; }
-    details.override > summary .num { color: var(--ink); font-weight: 600; margin-right: 14px; }
-    details.override > summary .opt { font-size: 10px; color: var(--rule-strong); margin-left: 8px; text-transform: lowercase; letter-spacing: 0; font-style: italic; font-family: "Fraunces", serif; }
-    details.override > summary::after { content: "+"; font-size: 14px; color: var(--ink); margin-left: 16px; }
-    details.override[open] > summary::after { content: "−"; }
-    details.override .body { padding: 4px 0 18px; }
-    details.override textarea {
+    details.additive > summary::-webkit-details-marker { display: none; }
+    details.additive > summary .opt { font-size: 10px; color: var(--rule-strong); margin-left: 8px; text-transform: lowercase; letter-spacing: 0; font-style: italic; font-family: "Fraunces", serif; }
+    details.additive > summary::after { content: "+"; font-size: 14px; color: var(--ink); margin-left: auto; }
+    details.additive[open] > summary::after { content: "−"; }
+    details.additive .body { padding: 4px 0 8px; }
+    details.additive textarea {
       width: 100%;
       background: transparent;
       border: 1px solid var(--rule);
@@ -172,11 +190,11 @@
       font-size: 12px;
       color: var(--ink);
       resize: vertical;
-      min-height: 96px;
+      min-height: 80px;
       line-height: 1.6;
     }
-    details.override textarea::placeholder { color: var(--rule-strong); }
-    details.override textarea:focus { outline: none; border-color: var(--ink); }
+    details.additive textarea::placeholder { color: var(--rule-strong); }
+    details.additive textarea:focus { outline: none; border-color: var(--ink); }
     /* ───────── run button ───────── */
     .run {
       width: 100%;
@@ -491,15 +509,19 @@
       <div class="hint">accepts &nbsp;·&nbsp; .txt &nbsp;·&nbsp; .pdf &nbsp;·&nbsp; .png &nbsp;·&nbsp; .jpg</div>
     </section>
 
-    <!-- 002 / override forbidden list -->
+    <!-- 002 / blocked ingredients (default list + additive textarea) -->
     <section>
-      <details class="override">
+      <div class="sect-head"><span class="num">002</span><span>blocked ingredients</span><span class="count" id="blockedCount"></span></div>
+      <div class="blocklist-cloud" id="blocklist">
+        <span class="blocklist-loading">loading default blocklist…</span>
+      </div>
+      <details class="additive">
         <summary>
-          <span><span class="num">002</span> override forbidden list <span class="opt">— optional</span></span>
+          <span>add more <span class="opt">— optional, one per line</span></span>
         </summary>
         <div class="body">
-          <textarea id="forbidden" spellcheck="false" placeholder="one ingredient per line&#10;e.g.&#10;Benzene&#10;Methylparaben&#10;C8H10N4O2"></textarea>
-          <div class="hint">leave empty to use the default 13-entry list</div>
+          <textarea id="forbidden" spellcheck="false" placeholder="Benzene&#10;Aspartame&#10;C2H6O"></textarea>
+          <div class="hint">added entries are merged with the default list for this request only</div>
         </div>
       </details>
     </section>
@@ -550,6 +572,31 @@
 
     let chosenFile = null;
     let currentObjectUrl = null;
+    let defaultBlocklist = [];
+
+    const blocklistEl = document.getElementById('blocklist');
+    const blockedCountEl = document.getElementById('blockedCount');
+
+    function renderBlocklist() {
+      const added = forbiddenEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+      const seenLower = new Set(defaultBlocklist.map(s => s.toLowerCase()));
+      const uniqueAdded = added.filter(s => !seenLower.has(s.toLowerCase()));
+      const all = [...defaultBlocklist, ...uniqueAdded];
+      blockedCountEl.textContent = uniqueAdded.length
+        ? `${defaultBlocklist.length}+${uniqueAdded.length}` : `${defaultBlocklist.length}`;
+      blocklistEl.innerHTML = all.map((s, i) => {
+        const cls = i >= defaultBlocklist.length ? 'pellet added' : 'pellet';
+        return `<span class="${cls}">${escapeHtml(s)}</span>`;
+      }).join('');
+    }
+
+    fetch('/forbidden_ingredients')
+      .then(r => r.json())
+      .then(d => { defaultBlocklist = d.ingredients || []; renderBlocklist(); })
+      .catch(() => { blocklistEl.innerHTML = `<span class="blocklist-loading">could not load default blocklist</span>`; });
+
+    // Live preview: as user types extra entries, append them as dashed chips.
+    forbiddenEl.addEventListener('input', renderBlocklist);
 
     function setFile(f) {
       chosenFile = f;
@@ -612,10 +659,10 @@
 
       const fd = new FormData();
       fd.append('file', chosenFile);
-      const forbidden = forbiddenEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+      const added = forbiddenEl.value.split('\n').map(s => s.trim()).filter(Boolean);
       const ocr = document.querySelector('input[name=ocr]:checked').value;
       const reqBody = { ocr_strategy: ocr };
-      if (forbidden.length) reqBody.forbidden_ingredients = forbidden;
+      if (added.length) reqBody.additional_forbidden_ingredients = added;
       fd.append('payload', JSON.stringify(reqBody));
 
       try {

@@ -57,12 +57,14 @@ class Services:
     async def aclose(self) -> None:
         await self.pubchem.aclose()
 
-    async def pipeline_for(self, custom_forbidden: list[str] | None) -> MatchPipeline:
-        """Return a MatchPipeline using either the default forbidden index
-        or a custom one resolved against PubChem (cached by content hash)."""
-        if not custom_forbidden:
+    async def pipeline_for(self, additional_forbidden: list[str] | None) -> MatchPipeline:
+        """Return a MatchPipeline whose forbidden list is the default plus
+        any caller-supplied additions (additive, deduped, cached by content
+        hash). Empty / None → default-only pipeline reused."""
+        if not additional_forbidden:
             return self.pipeline
-        idx = await self._index_for(custom_forbidden)
+        merged = list(self.forbidden_index.raw_entries) + list(additional_forbidden)
+        idx = await self._index_for(merged)
         return MatchPipeline(
             index=idx, resolver=self.resolver, judge=self.judge,
             exhaustive=self.settings.exhaustive_match,

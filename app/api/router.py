@@ -45,12 +45,19 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@router.get("/forbidden_ingredients")
+async def get_forbidden_ingredients(request: Request) -> dict[str, list[str]]:
+    """The default blocklist the API ships with. UI renders these as chips."""
+    svc = _services(request)
+    return {"ingredients": list(svc.forbidden_index.raw_entries)}
+
+
 async def _evaluate(svc: Services, file_bytes: bytes, mime: str, filename: str | None,
                     body: EvaluateRequest) -> EvaluateResponse:
     extraction = await svc.router.run(
         file_bytes, mime, filename, strategy=body.ocr_strategy
     )
-    pipeline = await svc.pipeline_for(body.forbidden_ingredients)
+    pipeline = await svc.pipeline_for(body.additional_forbidden_ingredients)
     hits, trace = await pipeline.evaluate(extraction)
     return to_response(extraction, hits, trace)
 
