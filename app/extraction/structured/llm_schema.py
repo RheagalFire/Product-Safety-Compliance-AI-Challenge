@@ -42,6 +42,12 @@ class LlmSchemaExtractor(StructuredExtractor):
                 {"role": "user", "content": user},
             ],
             schema=ProductExtraction,
+            # Gemini 3 family uses heavy "thinking" by default which blows the
+            # output budget mid-JSON; 'low' keeps it terse + on-schema. The
+            # max_tokens cap also prevents 3.1-flash-lite-preview from getting
+            # stuck in a token-repetition loop on the SKU field.
+            reasoning_effort="low",
+            max_tokens=4096,
         )
         if not extraction.raw_text:
             extraction.raw_text = raw.text

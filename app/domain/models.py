@@ -44,14 +44,21 @@ class MatchTrace(BaseModel):
     short_circuited_at: MatchLayer | None = None
 
 
-class AgentVerdict(BaseModel):
-    """Layer C LLM judge's verdict on whether a residual ingredient
-    is chemically equivalent to any forbidden compound."""
+class VerdictRow(BaseModel):
+    """One row of Layer C's batched cross-table verdict.
+    `ingredient` echoes the input surface form so we can map back."""
 
+    ingredient: str
     is_forbidden: bool
     matched_forbidden_entry: str | None = None
     rationale: str
     confidence: float
+
+
+class BatchVerdict(BaseModel):
+    """Single LLM call's verdict over a batch of residuals × forbidden list."""
+
+    verdicts: list[VerdictRow]
 
 
 class EvaluationResult(BaseModel):

@@ -33,7 +33,7 @@ class Services:
         resolver = KnowledgeResolver(pubchem)
         router = ExtractionRouter(
             llm=llm,
-            text_model=settings.primary_text_model,
+            text_model=settings.extraction_model,
             vision_model=settings.vision_model,
         )
         index = ForbiddenIndex.from_csv(settings.forbidden_csv)
